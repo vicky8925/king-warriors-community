@@ -22,16 +22,17 @@ export default function HomePage() {
   }, []);
 
   const pinned = updates.find((u) => u.pinned) ?? updates[0];
-  const recent = updates.filter((u) => u.id !== pinned.id).slice(0, 3);
+  const recent = pinned ? updates.filter((u) => u.id !== pinned.id).slice(0, 3) : [];
 
   return (
     <>
       <Hero />
-      <AnnouncementBanner update={pinned} />
+      {pinned && <AnnouncementBanner update={pinned} />}
       <StatsSection />
       <OverviewSection />
 
-      {/* Latest updates preview */}
+      {/* Latest updates preview — only shown once there's at least one published update */}
+      {recent.length > 0 && (
       <section className="section-padding py-20 sm:py-28">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
@@ -68,6 +69,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Join CTA */}
       <section id="cta" className="section-padding py-24 sm:py-32">
