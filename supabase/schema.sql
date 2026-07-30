@@ -112,6 +112,17 @@ create table if not exists contact_messages (
   handled boolean default false
 );
 
+-- ---------- site_settings ----------
+-- Single-row table (id is always 1) holding site-wide toggles, currently
+-- just maintenance mode. Read by middleware.ts on every request.
+create table if not exists site_settings (
+  id int primary key default 1,
+  maintenance_mode boolean not null default false,
+  maintenance_message text not null default 'We''ll be back shortly. King Warriors Community is undergoing scheduled maintenance — thank you for your patience.',
+  updated_at timestamptz default now()
+);
+insert into site_settings (id, maintenance_mode) values (1, false) on conflict (id) do nothing;
+
 -- ---------- Row Level Security ----------
 -- Public read access for content tables; writes restricted to authenticated
 -- admins. Adjust the admin check to your own role/claims setup.
@@ -124,6 +135,7 @@ alter table team_members enable row level security;
 alter table community_rules enable row level security;
 alter table faqs enable row level security;
 alter table contact_messages enable row level security;
+alter table site_settings enable row level security;
 
 create policy "Public read" on daily_updates for select using (true);
 create policy "Public read" on winners for select using (true);
@@ -146,3 +158,8 @@ create policy "Authenticated write" on faqs for all using (auth.role() = 'authen
 -- Anyone can submit a contact message; only authenticated admins can read them.
 create policy "Anyone can submit" on contact_messages for insert with check (true);
 create policy "Admins can read" on contact_messages for select using (auth.role() = 'authenticated');
+
+-- middleware.ts (unauthenticated, edge runtime) needs to read this on every
+-- request; only logged-in admins can flip the toggle.
+create policy "Public read" on site_settings for select using (true);
+create policy "Authenticated write" on site_settings for all using (auth.role() = 'authenticated');

@@ -13,6 +13,7 @@ import {
   CalendarDays,
   LogOut,
   ExternalLink,
+  Settings,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Crest } from "@/components/ui/Crest";
@@ -28,6 +29,7 @@ const NAV = [
   { href: "/admin/dashboard/gallery", label: "Gallery", icon: Images },
   { href: "/admin/dashboard/team", label: "Team", icon: Users },
   { href: "/admin/dashboard/rules", label: "Rules", icon: ScrollText },
+  { href: "/admin/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
