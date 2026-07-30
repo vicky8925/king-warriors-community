@@ -10,8 +10,8 @@ export const dashboardStats: DashboardStats = {
 };
 
 export const homeStats = [
-  { label: "Members", value: 10248, suffix: "+" },
-  { label: "Chapters", value: 12, suffix: "" },
-  { label: "Events Hosted", value: 34, suffix: "" },
-  { label: "Rewards Given", value: 128, suffix: "" },
+  { label: "Members", value: 7000, suffix: "+" },
+  { label: "Chapters", value: 170, suffix: "" },
+  { label: "Events Hosted", value: 1020, suffix: "" },
+  { label: "Rewards Given", value: 507, suffix: "" },
 ];
