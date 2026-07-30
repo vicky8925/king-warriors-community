@@ -1,12 +1,12 @@
 import type { DashboardStats } from "@/lib/types";
 
 export const dashboardStats: DashboardStats = {
-  totalMembers: 10248,
-  activeMembers: 6890,
-  totalEvents: 34,
-  totalWinners: 128,
-  totalUpdates: 96,
-  galleryCount: 214,
+  totalMembers: 7000,
+  activeMembers: 5500,
+  totalEvents: 1020,
+  totalWinners: 507,
+  totalUpdates: 87,
+  galleryCount: 0,
 };
 
 export const homeStats = [
