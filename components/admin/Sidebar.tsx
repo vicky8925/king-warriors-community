@@ -14,6 +14,7 @@ import {
   LogOut,
   ExternalLink,
   Settings,
+  UserPlus,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Crest } from "@/components/ui/Crest";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin/dashboard/members", label: "Members", icon: UserPlus },
   { href: "/admin/dashboard/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/dashboard/winners", label: "Reward Winners", icon: Trophy },
   { href: "/admin/dashboard/events", label: "Events", icon: CalendarClock },

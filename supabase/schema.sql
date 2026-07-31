@@ -112,6 +112,18 @@ create table if not exists contact_messages (
   handled boolean default false
 );
 
+-- ---------- members ----------
+-- Public signups from the /join page. Anyone can insert (no login
+-- required to sign up); only authenticated admins can read or delete.
+create table if not exists members (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  email text not null unique,
+  phone text,
+  why_join text,
+  joined_at timestamptz default now()
+);
+
 -- ---------- site_settings ----------
 -- Single-row table (id is always 1) holding site-wide toggles, currently
 -- just maintenance mode. Read by middleware.ts on every request.
@@ -138,6 +150,7 @@ alter table team_members enable row level security;
 alter table community_rules enable row level security;
 alter table faqs enable row level security;
 alter table contact_messages enable row level security;
+alter table members enable row level security;
 alter table site_settings enable row level security;
 
 create policy "Public read" on daily_updates for select using (true);
@@ -161,6 +174,11 @@ create policy "Authenticated write" on faqs for all using (auth.role() = 'authen
 -- Anyone can submit a contact message; only authenticated admins can read them.
 create policy "Anyone can submit" on contact_messages for insert with check (true);
 create policy "Admins can read" on contact_messages for select using (auth.role() = 'authenticated');
+
+-- Anyone can sign up as a member; only authenticated admins can read/delete the list.
+create policy "Anyone can sign up" on members for insert with check (true);
+create policy "Admins can manage members" on members for select using (auth.role() = 'authenticated');
+create policy "Admins can delete members" on members for delete using (auth.role() = 'authenticated');
 
 -- middleware.ts (unauthenticated, edge runtime) needs to read this on every
 -- request; only logged-in admins can flip the toggle.

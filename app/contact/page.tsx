@@ -94,9 +94,9 @@ export default function ContactPage() {
           {/* Info */}
           <div className="lg:col-span-2 space-y-5">
             <GlassCard hover={false}>
-              <a href="mailto:hello@kingwarriors.community" className="flex items-center gap-3 text-[var(--color-ivory)]">
+              <a href="mailto:kingwarriorscommunity@gmail.com" className="flex items-center gap-3 text-[var(--color-ivory)]">
                 <span className="rounded-full p-2.5 bg-[var(--color-gold)]/10 text-[var(--color-gold-bright)]"><Mail size={16} /></span>
-                hello@kingwarriors.community
+                kingwarriorscommunity@gmail.com
               </a>
             </GlassCard>
             <GlassCard hover={false}>

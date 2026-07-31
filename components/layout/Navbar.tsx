@@ -77,7 +77,7 @@ export function Navbar() {
         </div>
 
         <div className="hidden lg:block">
-          <Button size="sm" onClick={() => (window.location.href = "/#join")}>
+          <Button size="sm" onClick={() => (window.location.href = "/join")}>
             Join Community
           </Button>
         </div>
@@ -114,7 +114,7 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Button className="mt-4 w-full" onClick={() => (window.location.href = "/#join")}>
+              <Button className="mt-4 w-full" onClick={() => (window.location.href = "/join")}>
                 Join Community
               </Button>
             </div>

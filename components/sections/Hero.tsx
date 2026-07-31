@@ -68,7 +68,7 @@ export function Hero() {
             transition={{ delay: 1.15, duration: 0.6 }}
             className="mt-9 flex flex-col sm:flex-row items-center gap-4"
           >
-            <Button size="lg" onClick={() => document.getElementById("cta")?.scrollIntoView({ behavior: "smooth" })}>
+            <Button size="lg" onClick={() => (window.location.href = "/join")}>
               Join Community <ArrowRight size={17} />
             </Button>
             <Button

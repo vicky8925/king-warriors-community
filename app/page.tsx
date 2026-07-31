@@ -84,7 +84,7 @@ export default function HomePage() {
               Applications are reviewed within 48 hours. No cost to join — only a commitment to show up.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={() => (window.location.href = "/contact")}>
+              <Button size="lg" onClick={() => (window.location.href = "/join")}>
                 Join Community <ArrowRight size={17} />
               </Button>
               <a

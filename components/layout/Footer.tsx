@@ -75,10 +75,10 @@ export function Footer() {
         <div>
           <h4 className="eyebrow mb-4">Get in touch</h4>
           <a
-            href="mailto:hello@kingwarriors.community"
+            href="mailto:kingwarriorscommunity@gmail.com"
             className="flex items-center gap-2 text-sm text-[var(--color-ash)] hover:text-[var(--color-gold-bright)] transition-colors"
           >
-            <Mail size={14} /> hello@kingwarriors.community
+            <Mail size={14} /> kingwarriorscommunity@gmail.com
           </a>
           <Link
             href="/admin/login"

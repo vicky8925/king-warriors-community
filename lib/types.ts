@@ -125,3 +125,12 @@ export interface ContactFormValues {
   subject: string;
   message: string;
 }
+
+export interface Member {
+  id: UUID;
+  name: string;
+  email: string;
+  phone?: string;
+  whyJoin?: string;
+  joinedAt: string; // ISO date
+}
