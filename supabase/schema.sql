@@ -180,6 +180,27 @@ create policy "Anyone can sign up" on members for insert with check (true);
 create policy "Admins can manage members" on members for select using (auth.role() = 'authenticated');
 create policy "Admins can delete members" on members for delete using (auth.role() = 'authenticated');
 
+-- ============================================================
+-- STORAGE — gallery photo uploads
+-- Creates a public "gallery" bucket for admin-uploaded photos
+-- (see app/admin/dashboard/gallery/page.tsx).
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('gallery', 'gallery', true)
+on conflict (id) do nothing;
+
+create policy "Public read access to gallery bucket"
+on storage.objects for select
+using (bucket_id = 'gallery');
+
+create policy "Authenticated upload to gallery bucket"
+on storage.objects for insert
+with check (bucket_id = 'gallery' and auth.role() = 'authenticated');
+
+create policy "Authenticated delete from gallery bucket"
+on storage.objects for delete
+using (bucket_id = 'gallery' and auth.role() = 'authenticated');
+
 -- middleware.ts (unauthenticated, edge runtime) needs to read this on every
 -- request; only logged-in admins can flip the toggle.
 create policy "Public read" on site_settings for select using (true);
