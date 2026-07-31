@@ -119,6 +119,9 @@ create table if not exists site_settings (
   id int primary key default 1,
   maintenance_mode boolean not null default false,
   maintenance_message text not null default 'We''ll be back shortly. King Warriors Community is undergoing scheduled maintenance — thank you for your patience.',
+  total_members int not null default 10248,
+  active_members int not null default 6890,
+  chapters int not null default 12,
   updated_at timestamptz default now()
 );
 insert into site_settings (id, maintenance_mode) values (1, false) on conflict (id) do nothing;

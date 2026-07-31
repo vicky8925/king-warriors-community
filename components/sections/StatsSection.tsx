@@ -5,20 +5,28 @@ import { StatCard } from "@/components/ui/StatCard";
 import { homeStats } from "@/lib/data/stats";
 import { events as mockEvents, eventsCrud } from "@/lib/data/events";
 import { winners as mockWinners, winnersCrud } from "@/lib/data/winners";
+import { fetchSiteSettings, defaultSiteSettings } from "@/lib/data/settings";
 
 export function StatsSection() {
   const [eventsCount, setEventsCount] = useState(mockEvents.length);
   const [winnersCount, setWinnersCount] = useState(mockWinners.length);
+  const [members, setMembers] = useState(defaultSiteSettings.totalMembers);
+  const [chapters, setChapters] = useState(defaultSiteSettings.chapters);
 
   useEffect(() => {
     eventsCrud.fetchAll(mockEvents).then((data) => setEventsCount(data.length));
     winnersCrud.fetchAll(mockWinners).then((data) => setWinnersCount(data.length));
+    fetchSiteSettings().then((s) => {
+      setMembers(s.totalMembers);
+      setChapters(s.chapters);
+    });
   }, []);
 
-  // "Members" and "Chapters" are set manually in lib/data/stats.ts (no
-  // membership system yet). "Events Hosted" and "Rewards Given" reflect the
-  // live counts from the Events and Winners tables.
+  // Members and Chapters are editable from Admin → Settings. Events Hosted
+  // and Rewards Given reflect live counts from the Events and Winners tables.
   const stats = homeStats.map((s) => {
+    if (s.label === "Members") return { ...s, value: members };
+    if (s.label === "Chapters") return { ...s, value: chapters };
     if (s.label === "Events Hosted") return { ...s, value: eventsCount };
     if (s.label === "Rewards Given") return { ...s, value: winnersCount };
     return s;

@@ -50,6 +50,21 @@ export default function AdminSettingsPage() {
     toast.success("Maintenance message updated.");
   }
 
+  async function saveStats() {
+    setSaving(true);
+    const ok = await updateSiteSettings({
+      totalMembers: settings.totalMembers,
+      activeMembers: settings.activeMembers,
+      chapters: settings.chapters,
+    });
+    setSaving(false);
+    if (!ok) {
+      toast.error("Couldn't save stats — try logging out and back in.");
+      return;
+    }
+    toast.success("Community stats updated.");
+  }
+
   return (
     <div>
       <AdminPageHeader title="Settings" description="Site-wide controls, including maintenance mode." />
@@ -101,6 +116,44 @@ export default function AdminSettingsPage() {
         </FormField>
         <Button variant="secondary" onClick={saveMessage} disabled={saving}>
           Save Message
+        </Button>
+      </GlassCard>
+
+      <GlassCard hover={false} className="max-w-2xl mt-6">
+        <h3 className="font-display text-lg text-[var(--color-ivory)]">Community Stats</h3>
+        <p className="text-sm text-[var(--color-ash)] mt-1 max-w-md">
+          Shown on the homepage and admin overview. Members and Chapters are set manually here (there's no
+          sign-up/membership system yet) — Events, Winners, Updates, and Gallery counts update automatically from your data.
+        </p>
+
+        <div className="grid sm:grid-cols-3 gap-4 mt-6">
+          <FormField label="Total Members">
+            <input
+              type="number"
+              className={inputClass}
+              value={settings.totalMembers}
+              onChange={(e) => setSettings((s) => ({ ...s, totalMembers: Number(e.target.value) }))}
+            />
+          </FormField>
+          <FormField label="Active Members">
+            <input
+              type="number"
+              className={inputClass}
+              value={settings.activeMembers}
+              onChange={(e) => setSettings((s) => ({ ...s, activeMembers: Number(e.target.value) }))}
+            />
+          </FormField>
+          <FormField label="Chapters">
+            <input
+              type="number"
+              className={inputClass}
+              value={settings.chapters}
+              onChange={(e) => setSettings((s) => ({ ...s, chapters: Number(e.target.value) }))}
+            />
+          </FormField>
+        </div>
+        <Button variant="secondary" onClick={saveStats} disabled={saving}>
+          Save Stats
         </Button>
       </GlassCard>
     </div>

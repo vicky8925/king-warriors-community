@@ -5,7 +5,7 @@ import { Users, UserCheck, CalendarClock, Trophy, Megaphone, Images } from "luci
 import { DashboardWidget } from "@/components/admin/DashboardWidget";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useAuth } from "@/lib/auth";
-import { dashboardStats } from "@/lib/data/stats";
+import { fetchSiteSettings, defaultSiteSettings, type SiteSettings } from "@/lib/data/settings";
 import { updates as mockUpdates, updatesCrud } from "@/lib/data/updates";
 import { events as mockEvents, eventsCrud } from "@/lib/data/events";
 import { winners as mockWinners, winnersCrud } from "@/lib/data/winners";
@@ -21,12 +21,14 @@ export default function DashboardOverviewPage() {
   const [events, setEvents] = useState<CommunityEvent[]>(mockEvents);
   const [winners, setWinners] = useState<Winner[]>(mockWinners);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(mockGalleryAll);
+  const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
 
   useEffect(() => {
     updatesCrud.fetchAll(mockUpdates).then(setUpdates);
     eventsCrud.fetchAll(mockEvents).then(setEvents);
     winnersCrud.fetchAll(mockWinners).then(setWinners);
     galleryCrud.fetchAll(mockGalleryAll).then(setGalleryItems);
+    fetchSiteSettings().then(setSettings);
   }, []);
 
   const upcomingEvent = events.find((e) => e.status === "upcoming");
@@ -41,8 +43,8 @@ export default function DashboardOverviewPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-        <DashboardWidget icon={Users} label="Total Members" value={dashboardStats.totalMembers.toLocaleString()} trend="+3.2% this month" />
-        <DashboardWidget icon={UserCheck} label="Active Members" value={dashboardStats.activeMembers.toLocaleString()} />
+        <DashboardWidget icon={Users} label="Total Members" value={settings.totalMembers.toLocaleString()} />
+        <DashboardWidget icon={UserCheck} label="Active Members" value={settings.activeMembers.toLocaleString()} />
         <DashboardWidget icon={CalendarClock} label="Total Events" value={events.length} />
         <DashboardWidget icon={Trophy} label="Total Winners" value={winners.length} />
         <DashboardWidget icon={Megaphone} label="Total Updates" value={updates.length} />
@@ -50,7 +52,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       <p className="text-xs text-[var(--color-ash-dim)] mt-3">
-        Member counts are set manually below (no membership/sign-up system yet) — everything else updates live from your data.
+        Member and Chapter counts are set in Settings — everything else updates live from your data.
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
