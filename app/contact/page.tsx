@@ -33,12 +33,21 @@ export default function ContactPage() {
     if (Object.keys(validationErrors).length > 0) return;
 
     setSubmitting(true);
-    // NOTE: wire this to your Supabase `contact_messages` table (see /supabase/schema.sql)
-    // or a serverless route once the backend is connected.
-    await new Promise((r) => setTimeout(r, 900));
-    setSubmitting(false);
-    toast.success("Message sent — the council will reply within 48 hours.");
-    setValues(initialValues);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong.");
+      toast.success("Message sent — the council will reply within 48 hours.");
+      setValues(initialValues);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't send your message. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
