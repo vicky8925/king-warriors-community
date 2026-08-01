@@ -10,6 +10,7 @@ import { updates as mockUpdates, updatesCrud } from "@/lib/data/updates";
 import { events as mockEvents, eventsCrud } from "@/lib/data/events";
 import { winners as mockWinners, winnersCrud } from "@/lib/data/winners";
 import { gallery as mockGallery, galleryVideos, galleryCrud } from "@/lib/data/gallery";
+import { countMembers } from "@/lib/data/members";
 import { formatDate } from "@/lib/utils";
 import type { DailyUpdate, CommunityEvent, Winner, GalleryItem } from "@/lib/types";
 
@@ -22,6 +23,7 @@ export default function DashboardOverviewPage() {
   const [winners, setWinners] = useState<Winner[]>(mockWinners);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(mockGalleryAll);
   const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
+  const [memberCount, setMemberCount] = useState(0);
 
   useEffect(() => {
     updatesCrud.fetchAll(mockUpdates).then(setUpdates);
@@ -29,6 +31,7 @@ export default function DashboardOverviewPage() {
     winnersCrud.fetchAll(mockWinners).then(setWinners);
     galleryCrud.fetchAll(mockGalleryAll).then(setGalleryItems);
     fetchSiteSettings().then(setSettings);
+    countMembers().then(setMemberCount);
   }, []);
 
   const upcomingEvent = events.find((e) => e.status === "upcoming");
@@ -43,7 +46,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-        <DashboardWidget icon={Users} label="Total Members" value={settings.totalMembers.toLocaleString()} />
+        <DashboardWidget icon={Users} label="Total Members" value={memberCount.toLocaleString()} trend="From /join signups" />
         <DashboardWidget icon={UserCheck} label="Active Members" value={settings.activeMembers.toLocaleString()} />
         <DashboardWidget icon={CalendarClock} label="Total Events" value={events.length} />
         <DashboardWidget icon={Trophy} label="Total Winners" value={winners.length} />
@@ -52,7 +55,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       <p className="text-xs text-[var(--color-ash-dim)] mt-3">
-        Member and Chapter counts are set in Settings — everything else updates live from your data.
+        Total Members is a live count of real signups from the /join page. Active Members and Chapters are set in Settings.
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">

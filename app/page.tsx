@@ -10,15 +10,18 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard, Badge } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { updates as mockUpdates, updatesCrud } from "@/lib/data/updates";
+import { countMembers } from "@/lib/data/members";
 import { formatDate } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import type { DailyUpdate } from "@/lib/types";
 
 export default function HomePage() {
   const [updates, setUpdates] = useState<DailyUpdate[]>(mockUpdates);
+  const [memberCount, setMemberCount] = useState<number | null>(null);
 
   useEffect(() => {
     updatesCrud.fetchAll(mockUpdates).then(setUpdates);
+    countMembers().then(setMemberCount);
   }, []);
 
   const pinned = updates.find((u) => u.pinned) ?? updates[0];
@@ -78,7 +81,7 @@ export default function HomePage() {
           <div className="relative">
             <span className="eyebrow">Your Place Awaits</span>
             <h2 className="font-display mt-4 text-3xl sm:text-4xl text-[var(--color-ivory)] leading-tight">
-              Ten thousand warriors rose. <span className="text-gold-gradient">You&apos;re next.</span>
+              {joinHeadline(memberCount)}
             </h2>
             <p className="mt-4 text-[var(--color-ash)] max-w-lg mx-auto">
               Applications are reviewed within 48 hours. No cost to join — only a commitment to show up.
@@ -91,6 +94,30 @@ export default function HomePage() {
           </div>
         </GlassCard>
       </section>
+    </>
+  );
+}
+
+/** Builds the join CTA headline from the real, live member count — no hardcoded numbers. */
+function joinHeadline(count: number | null) {
+  if (count === null) return <span className="text-gold-gradient">Loading&hellip;</span>;
+  if (count === 0) {
+    return (
+      <>
+        Be the first to rise. <span className="text-gold-gradient">Together we lead.</span>
+      </>
+    );
+  }
+  if (count === 1) {
+    return (
+      <>
+        1 warrior has risen. <span className="text-gold-gradient">You could be next.</span>
+      </>
+    );
+  }
+  return (
+    <>
+      {count.toLocaleString()} warriors have risen. <span className="text-gold-gradient">You&apos;re next.</span>
     </>
   );
 }

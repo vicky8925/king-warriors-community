@@ -6,26 +6,26 @@ import { homeStats } from "@/lib/data/stats";
 import { events as mockEvents, eventsCrud } from "@/lib/data/events";
 import { winners as mockWinners, winnersCrud } from "@/lib/data/winners";
 import { fetchSiteSettings, defaultSiteSettings } from "@/lib/data/settings";
+import { countMembers } from "@/lib/data/members";
 
 export function StatsSection() {
   const [eventsCount, setEventsCount] = useState(mockEvents.length);
   const [winnersCount, setWinnersCount] = useState(mockWinners.length);
-  const [members, setMembers] = useState(defaultSiteSettings.totalMembers);
+  const [membersCount, setMembersCount] = useState(0);
   const [chapters, setChapters] = useState(defaultSiteSettings.chapters);
 
   useEffect(() => {
     eventsCrud.fetchAll(mockEvents).then((data) => setEventsCount(data.length));
     winnersCrud.fetchAll(mockWinners).then((data) => setWinnersCount(data.length));
-    fetchSiteSettings().then((s) => {
-      setMembers(s.totalMembers);
-      setChapters(s.chapters);
-    });
+    countMembers().then(setMembersCount);
+    fetchSiteSettings().then((s) => setChapters(s.chapters));
   }, []);
 
-  // Members and Chapters are editable from Admin → Settings. Events Hosted
-  // and Rewards Given reflect live counts from the Events and Winners tables.
+  // Members is a real, live count of signups from the /join page. Chapters
+  // is set manually from Admin → Settings. Events Hosted and Rewards Given
+  // reflect live counts from the Events and Winners tables.
   const stats = homeStats.map((s) => {
-    if (s.label === "Members") return { ...s, value: members };
+    if (s.label === "Members") return { ...s, value: membersCount, suffix: "" };
     if (s.label === "Chapters") return { ...s, value: chapters };
     if (s.label === "Events Hosted") return { ...s, value: eventsCount };
     if (s.label === "Rewards Given") return { ...s, value: winnersCount };
