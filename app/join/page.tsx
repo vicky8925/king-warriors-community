@@ -7,7 +7,6 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Crest } from "@/components/ui/Crest";
-import { submitMembership } from "@/lib/data/members";
 
 interface FormValues {
   name: string;
@@ -40,19 +39,25 @@ export default function JoinPage() {
     if (Object.keys(validationErrors).length > 0) return;
 
     setSubmitting(true);
-    const result = await submitMembership({
-      name: values.name,
-      email: values.email,
-      phone: values.phone || undefined,
-      whyJoin: values.whyJoin || undefined,
-    });
-    setSubmitting(false);
-
-    if (!result.success) {
-      setErrors({ email: result.error });
-      return;
+    try {
+      const res = await fetch("/api/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: values.name,
+          email: values.email,
+          phone: values.phone || undefined,
+          whyJoin: values.whyJoin || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong.");
+      setSubmitted(true);
+    } catch (err) {
+      setErrors({ email: err instanceof Error ? err.message : "Couldn't submit. Please try again." });
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitted(true);
   }
 
   if (submitted) {

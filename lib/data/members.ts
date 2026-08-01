@@ -43,27 +43,3 @@ export async function countMembers(): Promise<number> {
   if (error || count === null) return 0;
   return count;
 }
-
-/**
- * Public signup — separate from membersCrud.create because it must work
- * for anonymous visitors (no login), unlike every other "create" in this
- * app which requires an authenticated admin session.
- */
-export async function submitMembership(
-  member: Omit<Member, "id" | "joinedAt">
-): Promise<{ success: boolean; error?: string }> {
-  if (!isSupabaseConfigured || !supabase) {
-    return { success: false, error: "Signup isn't connected yet — please contact the community directly." };
-  }
-  const { error } = await supabase.from("members").insert({
-    name: member.name,
-    email: member.email,
-    phone: member.phone || null,
-    why_join: member.whyJoin || null,
-  });
-  if (error) {
-    if (error.code === "23505") return { success: false, error: "This email has already joined the community." };
-    return { success: false, error: "Something went wrong. Please try again." };
-  }
-  return { success: true };
-}
