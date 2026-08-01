@@ -2,11 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import toast from "react-hot-toast";
-import { Mail, MessageCircle, Send } from "lucide-react";
+import { Mail, Send } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import { InstagramIcon, YoutubeIcon, LinkedinIcon } from "@/components/ui/SocialIcons";
 import type { ContactFormValues } from "@/lib/types";
 
 const initialValues: ContactFormValues = { name: "", email: "", subject: "", message: "" };
@@ -107,35 +106,6 @@ export default function ContactPage() {
                 <span className="rounded-full p-2.5 bg-[var(--color-gold)]/10 text-[var(--color-gold-bright)]"><Mail size={16} /></span>
                 kingwarriorscommunity@gmail.com
               </a>
-            </GlassCard>
-            <GlassCard hover={false}>
-              <a
-                href="https://wa.me/910000000000"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-[var(--color-ivory)]"
-              >
-                <span className="rounded-full p-2.5 bg-[var(--color-gold)]/10 text-[var(--color-gold-bright)]"><MessageCircle size={16} /></span>
-                Chat with us on WhatsApp
-              </a>
-            </GlassCard>
-            <GlassCard hover={false}>
-              <p className="eyebrow mb-4">Follow along</p>
-              <div className="flex gap-3">
-                {[InstagramIcon, YoutubeIcon, LinkedinIcon].map((Icon, i) => (
-                  <a key={i} href="#" className="glass rounded-full p-2.5 text-[var(--color-ash)] hover:text-[var(--color-gold-bright)] transition-colors">
-                    <Icon size={16} />
-                  </a>
-                ))}
-              </div>
-            </GlassCard>
-            <GlassCard hover={false} className="p-0 overflow-hidden">
-              <iframe
-                title="King Warriors Community location"
-                src="https://www.google.com/maps?q=Chennai&output=embed"
-                className="w-full h-56 grayscale invert-[0.9] contrast-[1.1]"
-                loading="lazy"
-              />
             </GlassCard>
           </div>
         </div>

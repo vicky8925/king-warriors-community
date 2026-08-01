@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Hero } from "@/components/sections/Hero";
 import { AnnouncementBanner } from "@/components/sections/AnnouncementBanner";
 import { StatsSection } from "@/components/sections/StatsSection";
@@ -87,14 +87,6 @@ export default function HomePage() {
               <Button size="lg" onClick={() => (window.location.href = "/join")}>
                 Join Community <ArrowRight size={17} />
               </Button>
-              <a
-                href="https://wa.me/910000000000"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-[var(--color-ash)] hover:text-[var(--color-gold-bright)] transition-colors"
-              >
-                Message us on WhatsApp <ExternalLink size={14} />
-              </a>
             </div>
           </div>
         </GlassCard>

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { MessageCircle, Mail } from "lucide-react";
 import { Crest } from "@/components/ui/Crest";
-import { InstagramIcon, YoutubeIcon, LinkedinIcon } from "@/components/ui/SocialIcons";
 
 const COLUMNS = [
   {
@@ -24,12 +23,9 @@ const COLUMNS = [
   },
 ];
 
-const SOCIALS = [
-  { icon: InstagramIcon, href: "#", label: "Instagram" },
-  { icon: YoutubeIcon, href: "#", label: "YouTube" },
-  { icon: LinkedinIcon, href: "#", label: "LinkedIn" },
-  { icon: MessageCircle, href: "#", label: "WhatsApp" },
-];
+// Social links intentionally left out until real profiles exist — add
+// entries here (Instagram, YouTube, LinkedIn, etc.) when ready.
+const SOCIALS = [{ icon: MessageCircle, href: "#", label: "WhatsApp" }];
 
 export function Footer() {
   return (
