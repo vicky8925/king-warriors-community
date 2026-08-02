@@ -59,7 +59,8 @@ create table if not exists meetings (
   scheduled_at timestamptz not null,
   summary text,
   attachment_url text,
-  attachment_label text
+  attachment_label text,
+  register_url text
 );
 
 -- ---------- gallery_items ----------

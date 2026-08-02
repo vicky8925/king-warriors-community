@@ -9,6 +9,7 @@ interface MeetingRow {
   summary: string | null;
   attachment_url: string | null;
   attachment_label: string | null;
+  register_url: string | null;
 }
 
 function fromRow(row: MeetingRow): Meeting {
@@ -20,6 +21,7 @@ function fromRow(row: MeetingRow): Meeting {
     summary: row.summary ?? undefined,
     attachmentUrl: row.attachment_url ?? undefined,
     attachmentLabel: row.attachment_label ?? undefined,
+    registerUrl: row.register_url ?? undefined,
   };
 }
 
@@ -31,6 +33,7 @@ function toRow(item: Partial<Meeting>): Record<string, unknown> {
   if (item.summary !== undefined) row.summary = item.summary || null;
   if (item.attachmentUrl !== undefined) row.attachment_url = item.attachmentUrl || null;
   if (item.attachmentLabel !== undefined) row.attachment_label = item.attachmentLabel || null;
+  if (item.registerUrl !== undefined) row.register_url = item.registerUrl || null;
   return row;
 }
 

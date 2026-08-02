@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ImagePlus } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Modal, FormField, inputClass } from "@/components/admin/Modal";
 import { GlassCard, Badge } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { events as seedEvents, eventsCrud } from "@/lib/data/events";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/utils";
 import type { CommunityEvent, EventStatus } from "@/lib/types";
 
@@ -23,11 +23,26 @@ const emptyForm: Omit<CommunityEvent, "id"> = {
   status: "upcoming",
 };
 
+async function uploadEventImage(file: File): Promise<string | null> {
+  if (!supabase) return null;
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `events/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from("gallery").upload(path, file);
+  if (error) {
+    toast.error(`Image upload failed: ${error.message}`);
+    return null;
+  }
+  return supabase.storage.from("gallery").getPublicUrl(path).data.publicUrl;
+}
+
 export default function AdminEventsPage() {
   const [items, setItems] = useState<CommunityEvent[]>(seedEvents);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     eventsCrud.fetchAll(seedEvents).then(setItems);
@@ -36,13 +51,24 @@ export default function AdminEventsPage() {
   function openCreate() {
     setEditingId(null);
     setForm(emptyForm);
+    setFile(null);
+    setPreview(null);
     setModalOpen(true);
   }
 
   function openEdit(item: CommunityEvent) {
     setEditingId(item.id);
     setForm({ ...item, startAt: item.startAt.slice(0, 16) });
+    setFile(null);
+    setPreview(item.imageUrl ?? null);
     setModalOpen(true);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    setFile(selected);
+    setPreview(URL.createObjectURL(selected));
   }
 
   async function handleSave() {
@@ -50,9 +76,22 @@ export default function AdminEventsPage() {
       toast.error("Title and location are required.");
       return;
     }
-    const payload = { ...form, startAt: new Date(form.startAt).toISOString() };
+
+    setUploading(true);
+    let imageUrl = form.imageUrl;
+    if (file) {
+      const uploadedUrl = await uploadEventImage(file);
+      if (!uploadedUrl) {
+        setUploading(false);
+        return;
+      }
+      imageUrl = uploadedUrl;
+    }
+
+    const payload = { ...form, imageUrl, startAt: new Date(form.startAt).toISOString() };
     if (editingId) {
       const ok = await eventsCrud.update(editingId, payload);
+      setUploading(false);
       if (isSupabaseConfigured && !ok) {
         toast.error("Couldn't save to the database — try logging out and back in.");
         return;
@@ -61,6 +100,7 @@ export default function AdminEventsPage() {
       toast.success("Event updated.");
     } else {
       const saved = await eventsCrud.create(payload);
+      setUploading(false);
       if (isSupabaseConfigured && !saved) {
         toast.error("Couldn't save to the database — try logging out and back in.");
         return;
@@ -137,11 +177,23 @@ export default function AdminEventsPage() {
         <FormField label="Register URL (optional)">
           <input className={inputClass} value={form.registerUrl ?? ""} onChange={(e) => setForm({ ...form, registerUrl: e.target.value })} />
         </FormField>
-        <FormField label="Image URL (optional)">
-          <input className={inputClass} value={form.imageUrl ?? ""} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
+        <FormField label="Event Photo (optional)">
+          <label className="flex flex-col items-center justify-center gap-2 glass rounded-xl px-4 py-6 cursor-pointer hover:border-[var(--color-gold)]/40 transition-colors">
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="Preview" className="max-h-40 rounded-lg object-contain" />
+            ) : (
+              <>
+                <ImagePlus size={22} className="text-[var(--color-gold-bright)]" />
+                <span className="text-xs text-[var(--color-ash)]">Click to choose a photo from your computer</span>
+              </>
+            )}
+            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </label>
+          {file && <p className="text-xs text-[var(--color-ash-dim)] mt-2 truncate">{file.name}</p>}
         </FormField>
-        <Button className="w-full mt-2" onClick={handleSave}>
-          {editingId ? "Save Changes" : "Create Event"}
+        <Button className="w-full mt-2" onClick={handleSave} disabled={uploading}>
+          {uploading ? "Saving..." : editingId ? "Save Changes" : "Create Event"}
         </Button>
       </Modal>
     </div>

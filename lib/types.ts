@@ -69,6 +69,7 @@ export interface Meeting {
   summary?: string; // filled in after meeting happens
   attachmentUrl?: string;
   attachmentLabel?: string;
+  registerUrl?: string;
 }
 
 export type GalleryMediaType = "photo" | "video";

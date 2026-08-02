@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, FileText, ListChecks, LayoutGrid, List } from "lucide-react";
+import { CalendarDays, FileText, ListChecks, LayoutGrid, List, ArrowRight } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard, Badge } from "@/components/ui/GlassCard";
 import { meetings as mockMeetings, meetingsCrud } from "@/lib/data/meetings";
@@ -65,6 +65,16 @@ export default function MeetingsPage() {
                         ))}
                       </ul>
                     </div>
+                    {m.registerUrl && (
+                      <a
+                        href={m.registerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-5 inline-flex items-center gap-1.5 text-sm text-[var(--color-gold-bright)] hover:gap-2.5 transition-all"
+                      >
+                        Register <ArrowRight size={14} />
+                      </a>
+                    )}
                   </GlassCard>
                 ))}
               </div>

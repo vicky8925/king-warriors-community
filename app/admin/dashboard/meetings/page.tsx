@@ -17,6 +17,7 @@ const emptyForm: Omit<Meeting, "id"> = {
   agenda: [""],
   scheduledAt: new Date().toISOString().slice(0, 16),
   summary: "",
+  registerUrl: "",
 };
 
 export default function AdminMeetingsPage() {
@@ -113,6 +114,14 @@ export default function AdminMeetingsPage() {
             className={inputClass + " min-h-[100px]"}
             value={form.agenda.join("\n")}
             onChange={(e) => setForm({ ...form, agenda: e.target.value.split("\n") })}
+          />
+        </FormField>
+        <FormField label="Register URL (optional)">
+          <input
+            className={inputClass}
+            value={form.registerUrl ?? ""}
+            onChange={(e) => setForm({ ...form, registerUrl: e.target.value })}
+            placeholder="https://zoom.us/... or a Google Form link"
           />
         </FormField>
         <FormField label="Summary (fill in after the meeting)">
