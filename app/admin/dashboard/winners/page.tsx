@@ -2,19 +2,20 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ImagePlus } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Modal, FormField, inputClass } from "@/components/admin/Modal";
 import { GlassCard, Badge } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { winners as seedWinners, winnersCrud } from "@/lib/data/winners";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { uploadImage } from "@/lib/uploadImage";
 import type { Winner, WinnerTier } from "@/lib/types";
 
 const TIERS: WinnerTier[] = ["weekly", "monthly", "hall-of-fame"];
 const emptyForm: Omit<Winner, "id" | "date"> = {
   name: "",
-  photoUrl: "https://i.pravatar.cc/300",
+  photoUrl: "",
   tier: "weekly",
   reward: "",
   achievement: "",
@@ -27,6 +28,9 @@ export default function AdminWinnersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     winnersCrud.fetchAll(seedWinners).then(setItems);
@@ -35,13 +39,24 @@ export default function AdminWinnersPage() {
   function openCreate() {
     setEditingId(null);
     setForm(emptyForm);
+    setFile(null);
+    setPreview(null);
     setModalOpen(true);
   }
 
   function openEdit(item: Winner) {
     setEditingId(item.id);
     setForm({ ...item });
+    setFile(null);
+    setPreview(item.photoUrl || null);
     setModalOpen(true);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    setFile(selected);
+    setPreview(URL.createObjectURL(selected));
   }
 
   async function handleSave() {
@@ -49,22 +64,42 @@ export default function AdminWinnersPage() {
       toast.error("Name and achievement are required.");
       return;
     }
+    if (!editingId && !file) {
+      toast.error("Please choose a photo.");
+      return;
+    }
+
+    setUploading(true);
+    let photoUrl = form.photoUrl;
+    if (file) {
+      const uploadedUrl = await uploadImage(file, "winners");
+      if (!uploadedUrl) {
+        setUploading(false);
+        toast.error("Photo upload failed. Please try again.");
+        return;
+      }
+      photoUrl = uploadedUrl;
+    }
+
+    const payload = { ...form, photoUrl };
     if (editingId) {
-      const ok = await winnersCrud.update(editingId, form);
+      const ok = await winnersCrud.update(editingId, payload);
+      setUploading(false);
       if (isSupabaseConfigured && !ok) {
         toast.error("Couldn't save to the database — try logging out and back in.");
         return;
       }
-      setItems((prev) => prev.map((w) => (w.id === editingId ? { ...w, ...form } : w)));
+      setItems((prev) => prev.map((w) => (w.id === editingId ? { ...w, ...payload } : w)));
       toast.success("Winner updated.");
     } else {
       const date = new Date().toISOString();
-      const saved = await winnersCrud.create({ ...form, date });
+      const saved = await winnersCrud.create({ ...payload, date });
+      setUploading(false);
       if (isSupabaseConfigured && !saved) {
         toast.error("Couldn't save to the database — try logging out and back in.");
         return;
       }
-      const newItem: Winner = saved ?? { ...form, id: `w-${Date.now()}`, date };
+      const newItem: Winner = saved ?? { ...payload, id: `w-${Date.now()}`, date };
       setItems((prev) => [newItem, ...prev]);
       toast.success("Winner added.");
     }
@@ -116,8 +151,20 @@ export default function AdminWinnersPage() {
         <FormField label="Name">
           <input className={inputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </FormField>
-        <FormField label="Photo URL">
-          <input className={inputClass} value={form.photoUrl} onChange={(e) => setForm({ ...form, photoUrl: e.target.value })} />
+        <FormField label="Photo">
+          <label className="flex flex-col items-center justify-center gap-2 glass rounded-xl px-4 py-6 cursor-pointer hover:border-[var(--color-gold)]/40 transition-colors">
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="Preview" className="w-20 h-20 rounded-full object-cover" />
+            ) : (
+              <>
+                <ImagePlus size={22} className="text-[var(--color-gold-bright)]" />
+                <span className="text-xs text-[var(--color-ash)]">Click to choose a photo from your computer</span>
+              </>
+            )}
+            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </label>
+          {file && <p className="text-xs text-[var(--color-ash-dim)] mt-2 truncate">{file.name}</p>}
         </FormField>
         <FormField label="Tier">
           <select className={inputClass} value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value as WinnerTier })}>
@@ -140,8 +187,8 @@ export default function AdminWinnersPage() {
         <FormField label="Period Label">
           <input className={inputClass} value={form.periodLabel} onChange={(e) => setForm({ ...form, periodLabel: e.target.value })} placeholder="e.g. Week 29, 2026" />
         </FormField>
-        <Button className="w-full mt-2" onClick={handleSave}>
-          {editingId ? "Save Changes" : "Add Winner"}
+        <Button className="w-full mt-2" onClick={handleSave} disabled={uploading}>
+          {uploading ? "Saving..." : editingId ? "Save Changes" : "Add Winner"}
         </Button>
       </Modal>
     </div>

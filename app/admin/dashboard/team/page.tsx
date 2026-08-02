@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ImagePlus } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Modal, FormField, inputClass } from "@/components/admin/Modal";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { team as seedTeam, teamCrud } from "@/lib/data/team";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { uploadImage } from "@/lib/uploadImage";
 import type { TeamMember, TeamRole } from "@/lib/types";
 
 const ROLES: TeamRole[] = ["Founder", "Admin", "Moderator"];
@@ -16,7 +17,7 @@ const emptyForm: Omit<TeamMember, "id"> = {
   name: "",
   role: "Moderator",
   title: "",
-  photoUrl: "https://i.pravatar.cc/400",
+  photoUrl: "",
   bio: "",
 };
 
@@ -25,6 +26,9 @@ export default function AdminTeamPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     teamCrud.fetchAll(seedTeam).then(setItems);
@@ -33,13 +37,24 @@ export default function AdminTeamPage() {
   function openCreate() {
     setEditingId(null);
     setForm(emptyForm);
+    setFile(null);
+    setPreview(null);
     setModalOpen(true);
   }
 
   function openEdit(item: TeamMember) {
     setEditingId(item.id);
     setForm({ ...item });
+    setFile(null);
+    setPreview(item.photoUrl || null);
     setModalOpen(true);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    setFile(selected);
+    setPreview(URL.createObjectURL(selected));
   }
 
   async function handleSave() {
@@ -47,21 +62,41 @@ export default function AdminTeamPage() {
       toast.error("Name and title are required.");
       return;
     }
+    if (!editingId && !file) {
+      toast.error("Please choose a photo.");
+      return;
+    }
+
+    setUploading(true);
+    let photoUrl = form.photoUrl;
+    if (file) {
+      const uploadedUrl = await uploadImage(file, "team");
+      if (!uploadedUrl) {
+        setUploading(false);
+        toast.error("Photo upload failed. Please try again.");
+        return;
+      }
+      photoUrl = uploadedUrl;
+    }
+
+    const payload = { ...form, photoUrl };
     if (editingId) {
-      const ok = await teamCrud.update(editingId, form);
+      const ok = await teamCrud.update(editingId, payload);
+      setUploading(false);
       if (isSupabaseConfigured && !ok) {
         toast.error("Couldn't save to the database — try logging out and back in.");
         return;
       }
-      setItems((prev) => prev.map((t) => (t.id === editingId ? { ...t, ...form } : t)));
+      setItems((prev) => prev.map((t) => (t.id === editingId ? { ...t, ...payload } : t)));
       toast.success("Team member updated.");
     } else {
-      const saved = await teamCrud.create(form);
+      const saved = await teamCrud.create(payload);
+      setUploading(false);
       if (isSupabaseConfigured && !saved) {
         toast.error("Couldn't save to the database — try logging out and back in.");
         return;
       }
-      setItems((prev) => [saved ?? { ...form, id: `t-${Date.now()}` }, ...prev]);
+      setItems((prev) => [saved ?? { ...payload, id: `t-${Date.now()}` }, ...prev]);
       toast.success("Team member added.");
     }
     setModalOpen(false);
@@ -118,14 +153,26 @@ export default function AdminTeamPage() {
         <FormField label="Title">
           <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Head of Events" />
         </FormField>
-        <FormField label="Photo URL">
-          <input className={inputClass} value={form.photoUrl} onChange={(e) => setForm({ ...form, photoUrl: e.target.value })} />
+        <FormField label="Photo">
+          <label className="flex flex-col items-center justify-center gap-2 glass rounded-xl px-4 py-6 cursor-pointer hover:border-[var(--color-gold)]/40 transition-colors">
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="Preview" className="w-20 h-20 rounded-full object-cover" />
+            ) : (
+              <>
+                <ImagePlus size={22} className="text-[var(--color-gold-bright)]" />
+                <span className="text-xs text-[var(--color-ash)]">Click to choose a photo from your computer</span>
+              </>
+            )}
+            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </label>
+          {file && <p className="text-xs text-[var(--color-ash-dim)] mt-2 truncate">{file.name}</p>}
         </FormField>
         <FormField label="Bio">
           <textarea className={inputClass + " min-h-[80px]"} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
         </FormField>
-        <Button className="w-full mt-2" onClick={handleSave}>
-          {editingId ? "Save Changes" : "Add Member"}
+        <Button className="w-full mt-2" onClick={handleSave} disabled={uploading}>
+          {uploading ? "Saving..." : editingId ? "Save Changes" : "Add Member"}
         </Button>
       </Modal>
     </div>
