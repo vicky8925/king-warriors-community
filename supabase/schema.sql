@@ -177,9 +177,29 @@ create policy "Anyone can submit" on contact_messages for insert with check (tru
 create policy "Admins can read" on contact_messages for select using (auth.role() = 'authenticated');
 
 -- Anyone can sign up as a member; only authenticated admins can read/delete the list.
-create policy "Anyone can sign up" on members for insert with check (true);
+-- Signups go through app/api/join/route.ts (service role key, after OTP
+-- verification) — NOT directly from the browser — so there is deliberately
+-- no public insert policy here.
 create policy "Admins can manage members" on members for select using (auth.role() = 'authenticated');
 create policy "Admins can delete members" on members for delete using (auth.role() = 'authenticated');
+
+-- ---------- otp_codes ----------
+-- Email verification codes for /join signups. Deliberately has NO RLS
+-- policies at all — only app/api/*/route.ts, using the SECRET service role
+-- key (supabaseAdmin), can read or write it. This is what keeps codes from
+-- being readable via the public anon key.
+create table if not exists otp_codes (
+  id uuid primary key default uuid_generate_v4(),
+  email text not null,
+  code text not null,
+  consumed boolean not null default false,
+  verified_at timestamptz,
+  expires_at timestamptz not null,
+  created_at timestamptz default now()
+);
+create index if not exists otp_codes_email_idx on otp_codes(email);
+alter table otp_codes enable row level security;
+-- No policies added on purpose — see comment above.
 
 -- ============================================================
 -- STORAGE — gallery photo uploads

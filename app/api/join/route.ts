@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 const NOTIFY_EMAIL = "kingwarriorscommunity@gmail.com";
+const OTP_VALIDITY_WINDOW_MS = 30 * 60 * 1000; // must have verified within the last 30 minutes
 
 export async function POST(request: Request) {
   let body: { name?: string; email?: string; phone?: string; whyJoin?: string };
@@ -12,20 +13,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const { name, email, phone, whyJoin } = body;
-  if (!name?.trim() || !email?.trim()) {
+  const name = body.name?.trim();
+  const email = body.email?.trim().toLowerCase();
+  const phone = body.phone?.trim();
+  const whyJoin = body.whyJoin?.trim();
+
+  if (!name || !email) {
     return NextResponse.json({ error: "Name and email are required." }, { status: 400 });
   }
 
-  if (!isSupabaseConfigured || !supabase) {
+  if (!supabaseAdmin) {
     return NextResponse.json(
       { error: "Signup isn't connected yet — please contact the community directly." },
       { status: 503 }
     );
   }
 
+  // Require a recently-verified OTP for this email — this is what actually
+  // enforces "you must verify your email before joining", not just the UI.
+  const { data: otpRow } = await supabaseAdmin
+    .from("otp_codes")
+    .select("verified_at")
+    .eq("email", email)
+    .eq("consumed", true)
+    .order("verified_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const verifiedRecently =
+    !!otpRow?.verified_at && Date.now() - new Date(otpRow.verified_at).getTime() < OTP_VALIDITY_WINDOW_MS;
+
+  if (!verifiedRecently) {
+    return NextResponse.json({ error: "Please verify your email before joining." }, { status: 403 });
+  }
+
   // 1. Save to the members table.
-  const { error: insertError } = await supabase.from("members").insert({
+  const { error: insertError } = await supabaseAdmin.from("members").insert({
     name,
     email,
     phone: phone || null,
@@ -39,6 +62,9 @@ export async function POST(request: Request) {
     console.error("[join] Supabase insert failed:", insertError.message);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 502 });
   }
+
+  // Clean up used OTP rows for this email (best-effort).
+  await supabaseAdmin.from("otp_codes").delete().eq("email", email);
 
   // 2. Email a notification (best-effort — a failed email shouldn't fail the signup).
   const resendKey = process.env.RESEND_API_KEY;
