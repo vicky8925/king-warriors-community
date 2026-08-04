@@ -47,9 +47,19 @@ export const useAuth = create<AuthState>()(
 
         if (isSupabaseConfigured && supabase) {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-          set({ isLoading: false });
-          if (error || !data.user) return { success: false, error: error?.message ?? "Invalid credentials" };
+          if (error || !data.user) {
+            set({ isLoading: false });
+            return { success: false, error: error?.message ?? "Invalid credentials" };
+          }
+          // Member accounts (created via /join) are real Supabase Auth users
+          // too, tagged with role: "member" — they must never pass as admin.
+          if (data.user.user_metadata?.role === "member") {
+            await supabase.auth.signOut();
+            set({ isLoading: false });
+            return { success: false, error: "This account doesn't have council access." };
+          }
           set({
+            isLoading: false,
             user: {
               id: data.user.id,
               email: data.user.email ?? "",
@@ -76,16 +86,16 @@ export const useAuth = create<AuthState>()(
       },
 
       // Confirms the cached login is backed by a real, currently-valid
-      // Supabase session. This matters because zustand's `persist` keeps
-      // `user` in localStorage across visits — without this check, a user
-      // who logged in before Supabase was connected (or whose session has
-      // since expired) would still appear "logged in" to the app while
-      // every database write silently fails because there's no valid
-      // access token attached to the request.
+      // Supabase session belonging to a council (non-member) account. This
+      // matters because zustand's `persist` keeps `user` in localStorage
+      // across visits — without this check, a stale/expired session, or a
+      // member account, would still appear "logged in" to the admin panel.
       verifySession: async () => {
         if (!isSupabaseConfigured || !supabase) return; // mock mode: nothing to verify
         const { data } = await supabase.auth.getSession();
-        if (!data.session) set({ user: null });
+        if (!data.session || data.session.user.user_metadata?.role === "member") {
+          set({ user: null });
+        }
       },
     }),
     { name: "kw-admin-auth" }

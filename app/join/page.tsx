@@ -1,20 +1,27 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Send, ShieldCheck, ArrowLeft } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Crest } from "@/components/ui/Crest";
+import { useMemberAuth } from "@/lib/memberAuth";
 
-type Step = "email" | "otp" | "details" | "done";
+type Step = "email" | "otp" | "details" | "welcome";
 
 export default function JoinPage() {
+  const router = useRouter();
+  const memberLogin = useMemberAuth((s) => s.login);
+
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [whyJoin, setWhyJoin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +33,22 @@ export default function JoinPage() {
     const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [resendCooldown]);
+
+  // Once we reach "welcome", log the new account in and take them home.
+  useEffect(() => {
+    if (step !== "welcome") return;
+    let cancelled = false;
+    (async () => {
+      await memberLogin(email, password);
+      if (cancelled) return;
+      const t = setTimeout(() => router.push("/"), 1800);
+      return () => clearTimeout(t);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   async function sendOtp(e?: FormEvent) {
     e?.preventDefault();
@@ -82,6 +105,14 @@ export default function JoinPage() {
       setError("Please enter your name.");
       return;
     }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.");
+      return;
+    }
     if (phone && !/^[0-9+\-\s()]{7,15}$/.test(phone)) {
       setError("Enter a valid phone number.");
       return;
@@ -92,11 +123,11 @@ export default function JoinPage() {
       const res = await fetch("/api/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone: phone || undefined, whyJoin: whyJoin || undefined }),
+        body: JSON.stringify({ name, email, password, phone: phone || undefined, whyJoin: whyJoin || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
-      setStep("done");
+      setStep("welcome");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't submit. Please try again.");
     } finally {
@@ -104,7 +135,7 @@ export default function JoinPage() {
     }
   }
 
-  if (step === "done") {
+  if (step === "welcome") {
     return (
       <div className="section-padding py-24 sm:py-32 min-h-[70vh] flex items-center justify-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg mx-auto text-center">
@@ -113,8 +144,7 @@ export default function JoinPage() {
           </div>
           <h1 className="font-display mt-6 text-3xl text-[var(--color-ivory)]">Welcome to the Community</h1>
           <p className="mt-4 text-[var(--color-ash)] leading-relaxed">
-            Thank you for joining, {name.split(" ")[0]}. The council will review your application and reach out
-            within 48 hours with next steps.
+            You&apos;re in, {name.split(" ")[0]}. Taking you to the home page&hellip;
           </p>
         </motion.div>
       </div>
@@ -177,6 +207,12 @@ export default function JoinPage() {
                 <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                   {submitting ? "Sending code..." : "Send Verification Code"} <Send size={16} />
                 </Button>
+                <p className="text-xs text-center text-[var(--color-ash-dim)]">
+                  Already a member?{" "}
+                  <a href="/login" className="text-[var(--color-gold-bright)] hover:underline">
+                    Log in instead
+                  </a>
+                </p>
               </motion.form>
             )}
 
@@ -246,6 +282,26 @@ export default function JoinPage() {
                 <Field label="Full Name">
                   <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Your full name" autoFocus />
                 </Field>
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <Field label="Password">
+                    <input
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={inputClass}
+                      placeholder="At least 6 characters"
+                      type="password"
+                    />
+                  </Field>
+                  <Field label="Confirm Password">
+                    <input
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={inputClass}
+                      placeholder="Re-enter password"
+                      type="password"
+                    />
+                  </Field>
+                </div>
                 <Field label="Phone (optional)">
                   <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="+91 98765 43210" />
                 </Field>
@@ -259,7 +315,7 @@ export default function JoinPage() {
                 </Field>
                 {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
                 <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-                  {submitting ? "Submitting..." : "Join Community"} <Send size={16} />
+                  {submitting ? "Creating account..." : "Join Community"} <Send size={16} />
                 </Button>
               </motion.form>
             )}
