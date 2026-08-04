@@ -7,6 +7,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard, Badge } from "@/components/ui/GlassCard";
 import { updates as mockUpdates, updatesCrud } from "@/lib/data/updates";
 import { formatDate } from "@/lib/utils";
+import { MemberGuard } from "@/components/MemberGuard";
 import type { DailyUpdate, UpdateCategory } from "@/lib/types";
 
 const CATEGORIES: { value: UpdateCategory | "all"; label: string }[] = [
@@ -19,6 +20,14 @@ const CATEGORIES: { value: UpdateCategory | "all"; label: string }[] = [
 ];
 
 export default function DailyUpdatesPage() {
+  return (
+    <MemberGuard>
+      <DailyUpdatesContent />
+    </MemberGuard>
+  );
+}
+
+function DailyUpdatesContent() {
   const [updates, setUpdates] = useState<DailyUpdate[]>(mockUpdates);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<UpdateCategory | "all">("all");

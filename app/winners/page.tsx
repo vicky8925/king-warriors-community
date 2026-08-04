@@ -5,6 +5,7 @@ import { Search, Trophy, Crown, Medal } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard, Badge } from "@/components/ui/GlassCard";
 import { winners as mockWinners, winnersCrud } from "@/lib/data/winners";
+import { MemberGuard } from "@/components/MemberGuard";
 import type { Winner, WinnerTier } from "@/lib/types";
 
 const TIERS: { value: WinnerTier; label: string; icon: typeof Trophy }[] = [
@@ -14,6 +15,14 @@ const TIERS: { value: WinnerTier; label: string; icon: typeof Trophy }[] = [
 ];
 
 export default function WinnersPage() {
+  return (
+    <MemberGuard>
+      <WinnersContent />
+    </MemberGuard>
+  );
+}
+
+function WinnersContent() {
   const [winners, setWinners] = useState<Winner[]>(mockWinners);
   const [query, setQuery] = useState("");
 

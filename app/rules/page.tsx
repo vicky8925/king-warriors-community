@@ -6,9 +6,18 @@ import { ChevronDown, ScrollText } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { rules as mockRules, rulesCrud, faqs } from "@/lib/data/rules";
+import { MemberGuard } from "@/components/MemberGuard";
 import type { CommunityRule } from "@/lib/types";
 
 export default function RulesPage() {
+  return (
+    <MemberGuard>
+      <RulesContent />
+    </MemberGuard>
+  );
+}
+
+function RulesContent() {
   const [rules, setRules] = useState<CommunityRule[]>(mockRules);
   const [openFaq, setOpenFaq] = useState<string | null>(faqs[0]?.id ?? null);
 

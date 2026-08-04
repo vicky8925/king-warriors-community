@@ -6,11 +6,20 @@ import { X, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { gallery, galleryVideos, galleryCrud } from "@/lib/data/gallery";
 import { cn } from "@/lib/utils";
+import { MemberGuard } from "@/components/MemberGuard";
 import type { GalleryItem } from "@/lib/types";
 
 const mockItems: GalleryItem[] = [...gallery, ...galleryVideos];
 
 export default function GalleryPage() {
+  return (
+    <MemberGuard>
+      <GalleryContent />
+    </MemberGuard>
+  );
+}
+
+function GalleryContent() {
   const [allItems, setAllItems] = useState<GalleryItem[]>(mockItems);
   const [category, setCategory] = useState("All");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);

@@ -5,6 +5,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { InstagramIcon, LinkedinIcon } from "@/components/ui/SocialIcons";
 import { team as mockTeam, teamCrud } from "@/lib/data/team";
+import { MemberGuard } from "@/components/MemberGuard";
 import type { TeamMember, TeamRole } from "@/lib/types";
 
 const GROUPS: { role: TeamRole; label: string }[] = [
@@ -16,6 +17,14 @@ const GROUPS: { role: TeamRole; label: string }[] = [
 const ICONS: Record<string, typeof InstagramIcon> = { Instagram: InstagramIcon, LinkedIn: LinkedinIcon };
 
 export default function TeamPage() {
+  return (
+    <MemberGuard>
+      <TeamContent />
+    </MemberGuard>
+  );
+}
+
+function TeamContent() {
   const [team, setTeam] = useState<TeamMember[]>(mockTeam);
 
   useEffect(() => {

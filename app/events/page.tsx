@@ -8,9 +8,18 @@ import { Button } from "@/components/ui/Button";
 import { CountdownTimer } from "@/components/ui/CountdownTimer";
 import { events as mockEvents, eventsCrud } from "@/lib/data/events";
 import { formatDateTime, formatDate } from "@/lib/utils";
+import { MemberGuard } from "@/components/MemberGuard";
 import type { CommunityEvent } from "@/lib/types";
 
 export default function EventsPage() {
+  return (
+    <MemberGuard>
+      <EventsContent />
+    </MemberGuard>
+  );
+}
+
+function EventsContent() {
   const [events, setEvents] = useState<CommunityEvent[]>(mockEvents);
   const [showPast, setShowPast] = useState(false);
 
