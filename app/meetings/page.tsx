@@ -7,9 +7,18 @@ import { GlassCard, Badge } from "@/components/ui/GlassCard";
 import { meetings as mockMeetings, meetingsCrud } from "@/lib/data/meetings";
 import { formatDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { MemberGuard } from "@/components/MemberGuard";
 import type { Meeting } from "@/lib/types";
 
 export default function MeetingsPage() {
+  return (
+    <MemberGuard>
+      <MeetingsContent />
+    </MemberGuard>
+  );
+}
+
+function MeetingsContent() {
   const [meetings, setMeetings] = useState<Meeting[]>(mockMeetings);
   const [view, setView] = useState<"list" | "calendar">("list");
 

@@ -13,9 +13,18 @@ import { updates as mockUpdates, updatesCrud } from "@/lib/data/updates";
 import { countMembers } from "@/lib/data/members";
 import { formatDate } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { MemberGuard } from "@/components/MemberGuard";
 import type { DailyUpdate } from "@/lib/types";
 
 export default function HomePage() {
+  return (
+    <MemberGuard redirect>
+      <HomeContent />
+    </MemberGuard>
+  );
+}
+
+function HomeContent() {
   const [updates, setUpdates] = useState<DailyUpdate[]>(mockUpdates);
   const [memberCount, setMemberCount] = useState<number | null>(null);
 

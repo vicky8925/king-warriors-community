@@ -2,13 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { Crest } from "@/components/ui/Crest";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useMemberAuth } from "@/lib/memberAuth";
 
-export function MemberGuard({ children }: { children: React.ReactNode }) {
+interface MemberGuardProps {
+  children: React.ReactNode;
+  /** If true, redirect straight to /login instead of showing a locked card. Used on the home page. */
+  redirect?: boolean;
+}
+
+export function MemberGuard({ children, redirect = false }: MemberGuardProps) {
+  const router = useRouter();
   const { user, verifySession } = useMemberAuth();
   const [checked, setChecked] = useState(false);
 
@@ -17,7 +25,11 @@ export function MemberGuard({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!checked) {
+  useEffect(() => {
+    if (checked && !user && redirect) router.replace("/login");
+  }, [checked, user, redirect, router]);
+
+  if (!checked || (redirect && !user)) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
         <Crest size={40} animate />

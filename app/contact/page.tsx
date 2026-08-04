@@ -7,10 +7,19 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import type { ContactFormValues } from "@/lib/types";
+import { MemberGuard } from "@/components/MemberGuard";
 
 const initialValues: ContactFormValues = { name: "", email: "", subject: "", message: "" };
 
 export default function ContactPage() {
+  return (
+    <MemberGuard>
+      <ContactContent />
+    </MemberGuard>
+  );
+}
+
+function ContactContent() {
   const [values, setValues] = useState<ContactFormValues>(initialValues);
   const [errors, setErrors] = useState<Partial<ContactFormValues>>({});
   const [submitting, setSubmitting] = useState(false);
