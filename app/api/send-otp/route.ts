@@ -6,7 +6,7 @@ function generateCode(): string {
 }
 
 export async function POST(request: Request) {
-  let body: { email?: string };
+  let body: { email?: string; purpose?: "signup" | "reset" };
   try {
     body = await request.json();
   } catch {
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
   }
 
   const email = body.email?.trim().toLowerCase();
+  const purpose = body.purpose === "reset" ? "reset" : "signup";
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
@@ -22,10 +23,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Signup verification isn't configured yet." }, { status: 503 });
   }
 
-  // Already a member? Don't waste an email sending them a code.
   const { data: existing } = await supabaseAdmin.from("members").select("id").eq("email", email).maybeSingle();
-  if (existing) {
+
+  if (purpose === "signup" && existing) {
     return NextResponse.json({ error: "This email has already joined the community." }, { status: 409 });
+  }
+  if (purpose === "reset" && !existing) {
+    return NextResponse.json({ error: "No account found with that email." }, { status: 404 });
   }
 
   const code = generateCode();
@@ -43,6 +47,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email service isn't configured yet." }, { status: 503 });
   }
 
+  const subject =
+    purpose === "reset"
+      ? "Your King Warriors Community password reset code"
+      : "Your King Warriors Community verification code";
+
   try {
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
@@ -50,7 +59,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         sender: { name: "King Warriors Community", email: "kingwarriorscommunity@gmail.com" },
         to: [{ email }],
-        subject: "Your King Warriors Community verification code",
+        subject,
         textContent: `Your verification code is: ${code}\n\nThis code expires in 10 minutes. If you didn't request this, you can ignore this email.`,
       }),
     });

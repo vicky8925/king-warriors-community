@@ -73,6 +73,11 @@ export default function LoginPage() {
               />
             </div>
           </label>
+          <div className="text-right -mt-2">
+            <a href="/forgot-password" className="text-xs text-[var(--color-ash)] hover:text-[var(--color-gold-bright)] transition-colors">
+              Forgot password?
+            </a>
+          </div>
 
           {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
 
