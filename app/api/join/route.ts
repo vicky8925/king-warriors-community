@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   // Clean up used OTP rows for this email (best-effort).
   await supabaseAdmin.from("otp_codes").delete().eq("email", email);
 
-  // 3. Email a notification (best-effort — a failed email shouldn't fail the signup).
+  // 3. Notify the admin via Resend (existing behavior — best-effort).
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
     try {
@@ -107,6 +107,34 @@ export async function POST(request: Request) {
       if (error) console.error("[join] Resend send failed:", error.message);
     } catch (err) {
       console.error("[join] Resend send threw:", err);
+    }
+  }
+
+  // 4. Welcome email to the member themselves, via Brevo — Resend's
+  // unverified sender can only email NOTIFY_EMAIL (our own inbox), so
+  // anything going to an arbitrary member's address has to go through
+  // Brevo, same as the OTP codes.
+  const brevoKey = process.env.BREVO_API_KEY;
+  if (brevoKey) {
+    try {
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "api-key": brevoKey },
+        body: JSON.stringify({
+          sender: { name: "King Warriors Community", email: NOTIFY_EMAIL },
+          to: [{ email, name }],
+          subject: "Welcome to King Warriors Community 👑",
+          textContent:
+            `Welcome, ${name}!\n\n` +
+            `You're officially part of King Warriors Community — together we rise, together we lead.\n\n` +
+            `The council will review your application and reach out within 48 hours with next steps.\n\n` +
+            `In the meantime, log in anytime at kingwarriorscommunity to check the latest updates, events, and more.\n\n` +
+            `— King Warriors Community`,
+        }),
+      });
+      if (!res.ok) console.error("[join] Brevo welcome email failed:", await res.text());
+    } catch (err) {
+      console.error("[join] Brevo welcome email threw:", err);
     }
   }
 
