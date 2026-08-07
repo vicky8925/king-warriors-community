@@ -195,9 +195,12 @@ create table if not exists otp_codes (
   consumed boolean not null default false,
   verified_at timestamptz,
   expires_at timestamptz not null,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  ip text,
+  attempts int not null default 0
 );
 create index if not exists otp_codes_email_idx on otp_codes(email);
+create index if not exists otp_codes_ip_idx on otp_codes(ip);
 alter table otp_codes enable row level security;
 -- No policies added on purpose — see comment above.
 
