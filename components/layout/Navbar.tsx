@@ -114,6 +114,13 @@ export function Navbar() {
                     transition={{ duration: 0.15 }}
                     className="absolute right-0 mt-2 w-44 glass-strong rounded-xl p-1.5 z-20"
                   >
+                    <Link
+                      href="/account"
+                      onClick={() => setMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[var(--color-ash)] hover:text-[var(--color-ivory)] hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                      <User size={14} /> My Account
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[var(--color-ash)] hover:text-[var(--color-danger)] hover:bg-white/5 transition-colors cursor-pointer"
@@ -176,7 +183,10 @@ export function Navbar() {
                     </span>
                     Signed in as {user.name}
                   </div>
-                  <Button variant="secondary" className="mt-3 w-full" onClick={handleLogout}>
+                  <Link href="/account" className="py-2.5 text-base text-[var(--color-ash)]">
+                    My Account
+                  </Link>
+                  <Button variant="secondary" className="mt-1 w-full" onClick={handleLogout}>
                     <LogOut size={14} /> Sign out
                   </Button>
                 </>

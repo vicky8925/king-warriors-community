@@ -163,25 +163,40 @@ create policy "Public read" on team_members for select using (true);
 create policy "Public read" on community_rules for select using (true);
 create policy "Public read" on faqs for select using (true);
 
-create policy "Authenticated write" on daily_updates for all using (auth.role() = 'authenticated');
-create policy "Authenticated write" on winners for all using (auth.role() = 'authenticated');
-create policy "Authenticated write" on events for all using (auth.role() = 'authenticated');
-create policy "Authenticated write" on meetings for all using (auth.role() = 'authenticated');
-create policy "Authenticated write" on gallery_items for all using (auth.role() = 'authenticated');
-create policy "Authenticated write" on team_members for all using (auth.role() = 'authenticated');
-create policy "Authenticated write" on community_rules for all using (auth.role() = 'authenticated');
-create policy "Authenticated write" on faqs for all using (auth.role() = 'authenticated');
+-- IMPORTANT: auth.role() = 'authenticated' matches ANY logged-in user,
+-- including regular members (not just council/admin accounts) — it's a
+-- Postgres-level role, unrelated to our app's user_metadata.role field.
+-- Every "admin write" policy below checks the actual metadata role
+-- embedded in the JWT instead, so member accounts can never write here.
+create policy "Authenticated write" on daily_updates for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
+create policy "Authenticated write" on winners for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
+create policy "Authenticated write" on events for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
+create policy "Authenticated write" on meetings for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
+create policy "Authenticated write" on gallery_items for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
+create policy "Authenticated write" on team_members for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
+create policy "Authenticated write" on community_rules for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
+create policy "Authenticated write" on faqs for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
 
--- Anyone can submit a contact message; only authenticated admins can read them.
+-- Anyone can submit a contact message; only admins can read them.
 create policy "Anyone can submit" on contact_messages for insert with check (true);
-create policy "Admins can read" on contact_messages for select using (auth.role() = 'authenticated');
+create policy "Admins can read" on contact_messages for select
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
 
--- Anyone can sign up as a member; only authenticated admins can read/delete the list.
 -- Signups go through app/api/join/route.ts (service role key, after OTP
 -- verification) — NOT directly from the browser — so there is deliberately
--- no public insert policy here.
-create policy "Admins can manage members" on members for select using (auth.role() = 'authenticated');
-create policy "Admins can delete members" on members for delete using (auth.role() = 'authenticated');
+-- no public insert policy here. Only admins can read or delete the directory.
+create policy "Admins can manage members" on members for select
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
+create policy "Admins can delete members" on members for delete
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
 
 -- ---------- otp_codes ----------
 -- Email verification codes for /join signups. Deliberately has NO RLS
@@ -219,13 +234,14 @@ using (bucket_id = 'gallery');
 
 create policy "Authenticated upload to gallery bucket"
 on storage.objects for insert
-with check (bucket_id = 'gallery' and auth.role() = 'authenticated');
+with check (bucket_id = 'gallery' and coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
 
 create policy "Authenticated delete from gallery bucket"
 on storage.objects for delete
-using (bucket_id = 'gallery' and auth.role() = 'authenticated');
+using (bucket_id = 'gallery' and coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
 
 -- middleware.ts (unauthenticated, edge runtime) needs to read this on every
 -- request; only logged-in admins can flip the toggle.
 create policy "Public read" on site_settings for select using (true);
-create policy "Authenticated write" on site_settings for all using (auth.role() = 'authenticated');
+create policy "Authenticated write" on site_settings for all
+  using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('founder', 'admin', 'moderator'));
